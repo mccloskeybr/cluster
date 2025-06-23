@@ -2,9 +2,9 @@
 # NOTE: OS type is Ubuntu Server 20.04.5 LTS (64-BIT), available on Raspberry Pi Imager.
 
 # NOTE: flags
-# NOTE: IP address range is 192.168.1.180 - 183.
 ip_addr=""
 leader_ip_addr="192.168.1.180"
+cluster_ip_addrs="192.168.1.180,192.168.1.181,192.168.1.182,192.168.1.183"
 gateway="192.168.1.1"
 access_point=""
 access_point_password=""
@@ -15,13 +15,14 @@ print_usage() {
   echo ""
   echo "OPTIONS:"
   echo ""
-  echo "  --ip_addr <addr>                   Static IP address.                                     REQUIRED."
-  echo "  --access_point <access_point>      Wifi name.                                             REQUIRED."
-  echo "  --access_point_password <password> Wifi password.                                         REQUIRED."
-  echo "  --leader_ip_addr <addr>            IP address of cluster leader. (Default: 192.168.1.180) OPTIONAL."
-  echo "  --gateway <gateway>                Gateway (Default: 192.168.1.1)                         OPTIONAL."
-  echo "  -d --dry_run                       If defined, does not apply file changes.               OPTIONAL."
-  echo "  -h --help                          Shows this text.                                       OPTIONAL."
+  echo "  --ip_addr <addr>                   Static IP address.                       REQUIRED."
+  echo "  --access_point <access_point>      Wifi name.                               REQUIRED."
+  echo "  --access_point_password <password> Wifi password.                           REQUIRED."
+  echo "  --leader_ip_addr <addr>            IP address of cluster leader.            OPTIONAL."
+  echo "  --cluster_ip_addrs <addr1,...>     IP addresss of all cluster nodes.        OPTIONAL."
+  echo "  --gateway <gateway>                Gateway (Default: 192.168.1.1)           OPTIONAL."
+  echo "  -d --dry_run                       If defined, does not apply file changes. OPTIONAL."
+  echo "  -h --help                          Shows this text.                         OPTIONAL."
 }
 
 parse_flags() {
@@ -44,6 +45,11 @@ parse_flags() {
       --leader_ip_addr)
         shift
         leader_ip_addr="$1"
+        shift
+        ;;
+      --cluster_ip_addrs)
+        shift
+        cluster_ip_addrs="$1"
         shift
         ;;
       --access_point)
@@ -94,11 +100,6 @@ validate_flags() {
   return $status
 }
 
-setup_home_dir() {
-  cd ~
-  mkdir bin
-}
-
 setup_network() {
   # TODO: prefer ethernet
 netplan_cfg="network:
@@ -135,9 +136,17 @@ netplan_cfg="network:
 
     echo "saving cluster lead address as environment variable."
     echo "LEADER_IP_ADDR=$leader_ip_addr" >> /etc/environment
+    if [[ "$leader_ip_addr" == "SELF" ]]; then
+      echo "CLUSTER_IP_ADDRS=$cluster_ip_addrs" >> /etc/environment
+    fi
   fi
 
   return 0
+}
+
+setup_home_dir() {
+  mkdir ~/bin
+  wget -O ~/.bashrc https://raw.githubusercontent.com/mccloskeybr/cluster/refs/heads/main/device/.bashrc 
 }
 
 install_dependencies() {
@@ -151,11 +160,8 @@ install_dependencies() {
 
   # bazel
   echo "installing bazel."
-  cd ~/bin
-  wget https://github.com/bazelbuild/bazelisk/releases/download/v1.26.0/bazelisk-linux-arm64
-  chmod +x bazelisk-linux-arm64
-  ln -s ~/bin/bazelisk-linux-arm64 ~/bin/bazel
-  cd ~
+  wget -O ~/bin/bazel https://github.com/bazelbuild/bazelisk/releases/download/v1.26.0/bazelisk-linux-arm64
+  chmod +x ~/bin/bazel
   # https://github.com/bazelbuild/bazel/issues/25843
   echo "USE_BAZEL_VERSION=8.1.1" >> /etc/environment
 
@@ -167,12 +173,11 @@ if [[ $(/usr/bin/id -u) -ne 0 ]]; then
   echo "Not running as root."
   exit
 fi
-cd ~
 
 parse_flags $@
 validate_flags
-setup_home_dir
 setup_network
+setup_home_dir
 install_dependencies
 
 if [[ dry_run -eq 0 ]]; then
