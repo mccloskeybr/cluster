@@ -1,18 +1,23 @@
+#include <grpcpp/ext/proto_server_reflection_plugin.h>
 #include <grpcpp/grpcpp.h>
 
 #include "absl/flags/flag.h"
 #include "absl/flags/parse.h"
 #include "absl/log/initialize.h"
+#include "absl/log/log.h"
 #include "absl/strings/str_format.h"
-#include "status/protos/service.pb.h"
+#include "status/service.grpc.pb.h"
 
-ABSL_FLAG(uint16_t port, 8080, "Server port for the service.");
+// NOTE: set flag --stderrthreshold=0 to also log to stderr.
+ABSL_FLAG(uint16_t, port, 8080, "Server port for the service.");
 
-class StatusServiceImpl final : public proto::Status::Service {
+class StatusServiceImpl final : public protos::Status::Service {
   grpc::Status HealthCheck(
       grpc::ServerContext* context,
-      const proto::HealthCheckRequest* request,
-      proto::HealthCheckResponse* response) override {
+      const protos::HealthCheckRequest* request,
+      protos::HealthCheckResponse* response) override {
+    LOG(INFO) << "Executing!";
+    *response->mutable_message() = "hello world";
     return grpc::Status::OK;
   }
 };

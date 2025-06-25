@@ -1,3 +1,9 @@
-test --cxxopt=/std:c++20 --compilation_mode=fastbuild
-build --cxxopt=/std:c++20 --compilation_mode=dbg
-run --cxxopt=/std:c++20 --compilation_mode=opt --copt=/arch:AVX2
+startup --output_user_root=Z:/bz
+startup --windows_enable_symlinks
+
+common --extra_toolchains=@local_config_cc//:cc-toolchain-x64_windows-clang-cl
+common --extra_execution_platforms=//:x64_windows-clang-cl
+common --cxxopt=/std:c++20
+common --host_cxxopt=/std:c++20
+common --define=protobuf_allow_msvc=true
+common --compilation_mode=opt

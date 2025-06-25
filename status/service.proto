@@ -3,7 +3,11 @@ syntax = "proto3";
 package protos;
 
 message HealthCheckRequest {}
-message HealthCheckResponse {}
+
+message HealthCheckResponse {
+  string message = 1;
+}
+
 service Status {
   rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse) {}
 }
