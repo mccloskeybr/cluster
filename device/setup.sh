@@ -1,14 +1,11 @@
 #!/bin/bash
-# NOTE: OS type is Ubuntu Server 20.04.5 LTS (64-BIT), available on Raspberry Pi Imager.
 
 # NOTE: flags
 ip_addr=""
 leader_ip_addr="192.168.1.180"
-cluster_ip_addrs="192.168.1.180,192.168.1.181,192.168.1.182,192.168.1.183"
 gateway="192.168.1.1"
 access_point=""
 access_point_password=""
-dry_run=0
 
 print_usage() {
   echo "Sets up Ubuntu environment for mini cluster."
@@ -19,9 +16,7 @@ print_usage() {
   echo "  --access_point <access_point>      Wifi name.                               REQUIRED."
   echo "  --access_point_password <password> Wifi password.                           REQUIRED."
   echo "  --leader_ip_addr <addr>            IP address of cluster leader.            OPTIONAL."
-  echo "  --cluster_ip_addrs <addr1,...>     IP addresss of all cluster nodes.        OPTIONAL."
   echo "  --gateway <gateway>                Gateway (Default: 192.168.1.1)           OPTIONAL."
-  echo "  -d --dry_run                       If defined, does not apply file changes. OPTIONAL."
   echo "  -h --help                          Shows this text.                         OPTIONAL."
 }
 
@@ -47,11 +42,6 @@ parse_flags() {
         leader_ip_addr="$1"
         shift
         ;;
-      --cluster_ip_addrs)
-        shift
-        cluster_ip_addrs="$1"
-        shift
-        ;;
       --access_point)
         shift
         access_point="$1"
@@ -60,10 +50,6 @@ parse_flags() {
       --access_point_password)
         shift
         access_point_password="$1"
-        shift
-        ;;
-      -d|--dry_run)
-        dry_run=1
         shift
         ;;
       *)
@@ -121,65 +107,38 @@ netplan_cfg="network:
     leader_ip_addr="SELF"
   fi
 
-  if [[ dry_run -eq 1 ]]; then
-    echo "dry run: netplan configuration:"
-    echo "$netplan_cfg"
-    echo ""
-    echo "dry run: leader ip address: $leader_ip_addr"
-  else
-    echo "generating netplan configuration."
-    rm /etc/netplan/*
-    echo "$netplan_cfg" > /etc/netplan/01-network.yaml
+  echo "generating netplan configuration."
+  echo "$netplan_cfg" | sudo tee /etc/netplan/01-network.yaml
 
-    echo "applying netplan configuration."
-    netplan apply
+  echo "applying netplan configuration."
+  sudo netplan apply
 
-    echo "saving cluster lead address as environment variable."
-    echo "LEADER_IP_ADDR=$leader_ip_addr" >> /etc/environment
-    if [[ "$leader_ip_addr" == "SELF" ]]; then
-      echo "CLUSTER_IP_ADDRS=$cluster_ip_addrs" >> /etc/environment
-    fi
-  fi
+  echo "saving cluster lead address as environment variable."
+  echo "LEADER_IP_ADDR=$leader_ip_addr" | sudo tee -a /etc/environment
 
   return 0
 }
 
-setup_home_dir() {
-  mkdir ~/bin
-  wget -O ~/.bashrc https://raw.githubusercontent.com/mccloskeybr/cluster/refs/heads/main/device/.bashrc 
-}
-
 install_dependencies() {
-  if [[ dry_run -eq 1 ]]; then
-    echo "dry run: skipping dependency installation."
-    return 0
-  fi
+  mkdir ~/bin
 
   echo "updating and upgrading."
-  apt update -y && apt upgrade -y
+  sudo apt update -y && sudo apt upgrade -y
 
   # bazel
   echo "installing bazel."
-  wget -O ~/bin/bazel https://github.com/bazelbuild/bazelisk/releases/download/v1.26.0/bazelisk-linux-arm64
-  chmod +x ~/bin/bazel
+  wget --retry-on-host-error -O ~/bin/bazel https://github.com/bazelbuild/bazelisk/releases/download/v1.26.0/bazelisk-linux-arm64
+  sudo chmod +x ~/bin/bazel
   # https://github.com/bazelbuild/bazel/issues/25843
-  echo "USE_BAZEL_VERSION=8.1.1" >> /etc/environment
+  echo "USE_BAZEL_VERSION=8.1.1" | sudo tee -a /etc/environment
 
   return 0
 }
 
 set -e
-if [[ $(/usr/bin/id -u) -ne 0 ]]; then
-  echo "Not running as root."
-  exit
-fi
-
 parse_flags $@
 validate_flags
 setup_network
-setup_home_dir
 install_dependencies
 
-if [[ dry_run -eq 0 ]]; then
-  echo "setup done. please reboot."
-fi
+echo "setup done. please reboot."
