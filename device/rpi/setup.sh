@@ -122,8 +122,9 @@ netplan_cfg="network:
 install_dependencies() {
   mkdir ~/bin
 
-  echo "installing apt packages."
-  sudo apt install -y g++ gcc zsh tmux neovim
+  echo "installing packages."
+  sudo apt install -y g++ gcc zsh tmux fzf luarocks
+  sudo snap install nvim --classic
 
   echo "installing dotfiles."
   mkdir ~/.dotfiles

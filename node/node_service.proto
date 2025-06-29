@@ -2,10 +2,22 @@ syntax = "proto3";
 
 package node;
 
-message HealthCheckRequest {}
+message DoWorkRequest {
+  string job_name = 1;
+  bytes executable = 2;
+  string args = 3;
+}
+message DoWorkResponse {}
 
-message HealthCheckResponse {}
+message GetUsageReportRequest {}
+message GetUsageReportResponse {
+  float cpu_usage = 1;
+}
 
 service NodeService {
-  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse) {}
+  // NOTE: Retrieves usage statistics for this node over a fixed time interval.
+  rpc GetUsageReport(GetUsageReportRequest) returns (GetUsageReportResponse) {}
+
+  // NOTE: Schedule work to be done on this node.
+  rpc DoWork(DoWorkRequest) returns (DoWorkResponse) {}
 }

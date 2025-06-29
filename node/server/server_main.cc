@@ -6,35 +6,17 @@
 #include "absl/log/initialize.h"
 #include "absl/log/log.h"
 #include "absl/strings/str_format.h"
-#include "node/node_service.grpc.pb.h"
+#include "node/server/node_service_impl.h"
 
 ABSL_FLAG(uint16_t, port, 8080, "Server port for the service.");
-
-class NodeServiceImpl final : public node::NodeService::Service {
- public:
-  explicit NodeServiceImpl() {
-    hi = "hello";
-    LOG(INFO) << "what's up?";
-  }
-
- private:
-  grpc::Status HealthCheck(
-      grpc::ServerContext* context,
-      const node::HealthCheckRequest* request,
-      node::HealthCheckResponse* response) override {
-    LOG(INFO) << hi;
-    return grpc::Status::OK;
-  }
-
-  std::string hi;
-};
 
 int main(int argc, char** argv) {
   absl::ParseCommandLine(argc, argv);
   absl::InitializeLog();
 
-  NodeServiceImpl node_service;
+  node::NodeServiceImpl node_service;
 
+  grpc::reflection::InitProtoReflectionServerBuilderPlugin();
   grpc::ServerBuilder builder;
   std::string server_address = absl::StrFormat("0.0.0.0:%d", absl::GetFlag(FLAGS_port));
   builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
