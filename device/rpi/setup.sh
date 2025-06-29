@@ -122,22 +122,25 @@ netplan_cfg="network:
 install_dependencies() {
   mkdir ~/bin
 
-  echo "updating and upgrading."
-  sudo apt update -y && sudo apt upgrade -y
+  echo "installing apt packages."
+  sudo apt install -y g++ gcc zsh tmux neovim
 
-  sudo apt install g++ gcc
+  echo "installing dotfiles."
+  mkdir ~/.dotfiles
+  git clone https://github.com/mccloskeybr/dotfiles ~/.dotfiles
+  ~/.dotfiles/install --minimal
+  chsh -s $(which zsh)
+  curl -sL --proto-redir -all,https https://raw.githubusercontent.com/zplug/installer/master/installer.zsh | zsh
 
-  # bazel
   echo "installing bazel."
   wget --retry-on-host-error -O ~/bin/bazel https://github.com/bazelbuild/bazelisk/releases/download/v1.26.0/bazelisk-linux-arm64
   sudo chmod +x ~/bin/bazel
   # https://github.com/bazelbuild/bazel/issues/25843
-  export USE_BAZEL_VERSION=8.1.1
   echo "USE_BAZEL_VERSION=8.1.1" | sudo tee -a /etc/environment
+  export USE_BAZEL_VERSION=8.1.1
 
-  # bazel-remote
   if [[ "$leader_ip_addr" == "SELF" ]]; then
-    echo "installing and setting up bazel-remote."
+    echo "installing bazel-remote."
     sudo adduser bazel-remote
     sudo mkdir /home/bazel-remote/bin
     sudo mkdir /home/bazel-remote/cache
@@ -177,6 +180,9 @@ WantedBy=multi-user.target
     sudo systemctl daemon-reload
     sudo systemctl enable bazel-remote
   fi
+
+  echo "updating and upgrading."
+  sudo apt update -y && sudo apt upgrade -y
 
   return 0
 }

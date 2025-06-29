@@ -3,28 +3,31 @@ load("@grpc//bazel:cc_grpc_library.bzl", "cc_grpc_library")
 load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
 
 proto_library(
-  name = "service_proto",
-  srcs = ["service.proto"],
+  name = "node_service_proto",
+  srcs = ["node_service.proto"],
   deps = [],
 )
 
 cc_proto_library(
-  name = "service_cc_proto",
-  deps = [":service_proto"],
+  name = "node_service_cc_proto",
+  deps = [":node_service_proto"],
 )
 
 cc_grpc_library(
-  name = "service_cc_grpc",
-  srcs = [":service_proto"],
+  name = "node_service_cc_grpc",
+  srcs = [":node_service_proto"],
   grpc_only = True,
-  deps = [":service_cc_proto"],
+  deps = [":node_service_cc_proto"],
 )
 
 cc_binary(
   name = "main",
   srcs = ["main.cc"],
+  args = [
+    "--stderrthreshold=0",
+  ],
   deps = [
-    ":service_cc_grpc",
+    ":node_service_cc_grpc",
     "@abseil-cpp//absl/flags:flag",
     "@abseil-cpp//absl/flags:parse",
     "@abseil-cpp//absl/log:initialize",

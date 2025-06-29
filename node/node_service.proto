@@ -1,13 +1,11 @@
 syntax = "proto3";
 
-package protos;
+package node;
 
 message HealthCheckRequest {}
 
-message HealthCheckResponse {
-  string message = 1;
-}
+message HealthCheckResponse {}
 
-service Status {
+service NodeService {
   rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse) {}
 }
