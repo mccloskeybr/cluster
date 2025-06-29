@@ -44,7 +44,7 @@ parse_flags() {
         ;;
       --access_point)
         shift
-        access_point="$1"
+        access_point="$2"
         shift
         ;;
       --access_point_password)
@@ -125,12 +125,58 @@ install_dependencies() {
   echo "updating and upgrading."
   sudo apt update -y && sudo apt upgrade -y
 
+  sudo apt install g++ gcc
+
   # bazel
   echo "installing bazel."
   wget --retry-on-host-error -O ~/bin/bazel https://github.com/bazelbuild/bazelisk/releases/download/v1.26.0/bazelisk-linux-arm64
   sudo chmod +x ~/bin/bazel
   # https://github.com/bazelbuild/bazel/issues/25843
+  export USE_BAZEL_VERSION=8.1.1
   echo "USE_BAZEL_VERSION=8.1.1" | sudo tee -a /etc/environment
+
+  # bazel-remote
+  if [[ "$leader_ip_addr" == "SELF" ]]; then
+    echo "installing and setting up bazel-remote."
+    sudo adduser bazel-remote
+    sudo mkdir /home/bazel-remote/bin
+    sudo mkdir /home/bazel-remote/cache
+
+    git clone https://github.com/buchgr/bazel-remote/ ~/bazel-remote
+    cd ~/bazel-remote
+    bazel build :bazel-remote
+    sudo cp ./bazel-bin/bazel-remote_/bazel-remote /home/bazel-remote/bin/bazel-remote
+    cd ~
+    rm -r bazel-remote
+
+bazel_remote_service_cfg="[Unit]
+Description=bazel-remote cache
+
+[Service]
+User=bazel-remote
+Group=bazel-remote
+
+LimitNOFILE=40000
+LimitNPROC=infinity
+TasksMax=infinity
+Restart=on-failure
+Environment=GODEBUG=gctrace=1
+
+Environment=GOMEMLIMIT=8GiB
+
+ExecStart=/home/bazel-remote/bin/bazel-remote \
+	--max_size 1000 \
+	--dir /home/bazel-remote/cache \
+	--profile_host 127.0.0.1 \
+	--port 5000
+
+[Install]
+WantedBy=multi-user.target
+"
+    echo bazel_remote_service_cfg | sudo tee /etc/systemd/system/bazel-remote.service
+    sudo systemctl daemon-reload
+    sudo systemctl enable bazel-remote
+  fi
 
   return 0
 }
