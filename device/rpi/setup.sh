@@ -44,7 +44,7 @@ parse_flags() {
         ;;
       --access_point)
         shift
-        access_point="$2"
+        access_point="$1"
         shift
         ;;
       --access_point_password)
@@ -116,20 +116,22 @@ netplan_cfg="network:
   echo "saving cluster lead address as environment variable."
   echo "LEADER_IP_ADDR=$leader_ip_addr" | sudo tee -a /etc/environment
 
+  sleep 10
+
   return 0
 }
 
 install_dependencies() {
-  mkdir ~/bin
+  mkdir -p ~/bin
 
   echo "installing packages."
   sudo apt install -y g++ gcc zsh tmux fzf luarocks
   sudo snap install nvim --classic
 
   echo "installing dotfiles."
-  mkdir ~/.dotfiles
+  mkdir -p ~/.dotfiles
   git clone https://github.com/mccloskeybr/dotfiles ~/.dotfiles
-  ~/.dotfiles/install --minimal
+  ~/.dotfiles/install_minimal
   chsh -s $(which zsh)
   curl -sL --proto-redir -all,https https://raw.githubusercontent.com/zplug/installer/master/installer.zsh | zsh
 
@@ -143,15 +145,16 @@ install_dependencies() {
   if [[ "$leader_ip_addr" == "SELF" ]]; then
     echo "installing bazel-remote."
     sudo adduser bazel-remote
-    sudo mkdir /home/bazel-remote/bin
-    sudo mkdir /home/bazel-remote/cache
+    sudo mkdir -p /home/bazel-remote/bin
+    sudo mkdir -p /home/bazel-remote/cache
+    sudo chown -R bazel-remote:bazel-remote /home/bazel-remote
 
     git clone https://github.com/buchgr/bazel-remote/ ~/bazel-remote
     cd ~/bazel-remote
-    bazel build :bazel-remote
+    ~/bin/bazel build :bazel-remote
     sudo cp ./bazel-bin/bazel-remote_/bazel-remote /home/bazel-remote/bin/bazel-remote
     cd ~
-    rm -r bazel-remote
+    sudo rm -r bazel-remote
 
 bazel_remote_service_cfg="[Unit]
 Description=bazel-remote cache
