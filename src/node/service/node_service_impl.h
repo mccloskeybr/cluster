@@ -1,12 +1,12 @@
-#ifndef NODE_SERVER_NODE_SERVICE_IMPL_H_
-#define NODE_SERVER_NODE_SERVICE_IMPL_H_
+#ifndef SRC_NODE_SERVICE_NODE_SERVICE_IMPL_H_
+#define SRC_NODE_SERVICE_NODE_SERVICE_IMPL_H_
 
 #include <cstdint>
 #include <string>
 #include <grpcpp/grpcpp.h>
 
-#include "node/node_service.grpc.pb.h"
-#include "node/server/usage_stats.h"
+#include "src/node/node_service.grpc.pb.h"
+#include "src/node/service/usage_stats.h"
 
 namespace node {
 

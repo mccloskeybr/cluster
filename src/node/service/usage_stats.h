@@ -1,5 +1,5 @@
-#ifndef NODE_SERVER_USAGE_STATS_H_
-#define NODE_SERVER_USAGE_STATS_H_
+#ifndef SRC_NODE_SERVICE_USAGE_STATS_H_
+#define SRC_NODE_SERVICE_USAGE_STATS_H_
 
 #include <cstdint>
 #include <string>

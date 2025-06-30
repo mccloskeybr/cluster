@@ -1,4 +1,4 @@
-#include "node/server/node_service_impl.h"
+#include "src/node/service/node_service_impl.h"
 
 #include <filesystem>
 #include <fstream>
@@ -10,7 +10,7 @@
 #include "absl/log/log.h"
 #include "absl/strings/string_view.h"
 #include "absl/strings/str_cat.h"
-#include "node/node_service.grpc.pb.h"
+#include "src/node/node_service.grpc.pb.h"
 
 namespace node {
 namespace {
@@ -46,18 +46,23 @@ grpc::Status NodeServiceImpl::DoWork(
     std::ofstream file(exec_file, std::ios::binary);
     if (!file.is_open()) {
       return grpc::Status(grpc::StatusCode::INTERNAL,
-          absl::StrCat("Unable to open executable for job name: ", request->job_name()));
+          absl::StrCat("Unable to executable: ", exec_file));
     }
     file << request->executable();
     if (file.fail()) {
       return grpc::Status(grpc::StatusCode::INTERNAL,
-          absl::StrCat("Unable to copy executable for job name: ", request->job_name()));
+          absl::StrCat("Unable to executable: ", exec_file));
     }
   }
 
   std::error_code error;
-  std::filesystem::permissions(exec_file, std::filesystem::perms::owner_exec, error);
-  if (error) { TryRemoveFile(exec_file); }
+  std::filesystem::permissions(
+      exec_file, std::filesystem::perms::owner_exec, std::filesystem::perm_options::add,
+      error);
+  if (error) {
+    LOG(ERROR) << "Error updating permissions on file: " << exec_file
+      << ": " << error.message();
+    TryRemoveFile(exec_file); }
 
   LOG(INFO) << "Scheduling: " << request->job_name() << " for execution.";
   std::thread async_work_thread(

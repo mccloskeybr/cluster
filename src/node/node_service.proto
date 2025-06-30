@@ -4,8 +4,8 @@ package node;
 
 message DoWorkRequest {
   string job_name = 1;
-  bytes executable = 2;
-  string args = 3;
+  string args = 2;
+  bytes executable = 3;
 }
 message DoWorkResponse {}
 

@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package leader;
+
+message ScheduleJobRequest {
+  string job_name = 1;
+  string args = 3;
+}
+message ScheduleJobResponse {}
+
+service LeaderService {
+  rpc ScheduleJob(ScheduleJobRequest) returns (ScheduleJobResponse) {}
+}
