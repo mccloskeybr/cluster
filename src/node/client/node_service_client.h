@@ -6,8 +6,6 @@
 
 #include "src/node/node_service.grpc.pb.h"
 
-namespace node {
-
 class NodeServiceClient {
  public:
   explicit NodeServiceClient(std::shared_ptr<grpc::Channel> channel)
@@ -21,10 +19,12 @@ class NodeServiceClient {
       const node::DoWorkRequest& request,
       node::DoWorkResponse& response) const;
 
+  grpc::Status PollJobs(
+      const node::PollJobsRequest & request,
+      node::PollJobsResponse& response) const;
+
  private:
   std::unique_ptr<node::NodeService::Stub> stub_;
 };
-
-} // namespace node
 
 #endif

@@ -2,21 +2,32 @@ syntax = "proto3";
 
 package node;
 
+message GetUsageReportRequest {}
+
+message GetUsageReportResponse {
+  float cpu_usage = 1;
+}
+
+message PollJobsRequest {}
+
+message PollJobsResponse {
+  repeated string jobs = 1;
+}
+
 message DoWorkRequest {
   string job_name = 1;
   string args = 2;
   bytes executable = 3;
 }
-message DoWorkResponse {}
 
-message GetUsageReportRequest {}
-message GetUsageReportResponse {
-  float cpu_usage = 1;
-}
+message DoWorkResponse {}
 
 service NodeService {
   // NOTE: Retrieves usage statistics for this node over a fixed time interval.
   rpc GetUsageReport(GetUsageReportRequest) returns (GetUsageReportResponse) {}
+
+  // NOTE: Retrieves currently running jobs.
+  rpc PollJobs(PollJobsRequest) returns (PollJobsResponse) {}
 
   // NOTE: Schedule work to be done on this node.
   rpc DoWork(DoWorkRequest) returns (DoWorkResponse) {}

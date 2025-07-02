@@ -16,7 +16,8 @@ cc_library(
   hdrs = ["node_service_impl.h"],
   srcs = [
     "do_work_handler.cc",
-    "get_usage_report_handler.cc"
+    "get_usage_report_handler.cc",
+    "poll_jobs_handler.cc",
   ],
   deps = [
     ":usage_stats",

@@ -21,14 +21,14 @@ int main(int argc, char** argv) {
 
   grpc::reflection::InitProtoReflectionServerBuilderPlugin();
 
-  node::NodeServiceImpl node_service;
-  std::unique_ptr<leader::LeaderServiceImpl> leader_service = nullptr;
+  NodeServiceImpl node_service;
+  std::unique_ptr<LeaderServiceImpl> leader_service = nullptr;
 
   grpc::ServerBuilder builder;
   builder.RegisterService(&node_service);
   if (!absl::GetFlag(FLAGS_leader_config_path).empty()) {
     LOG(INFO) << "Registering LeaderService.";
-    const grpc::Status status = leader::LeaderServiceImpl::Create(
+    const grpc::Status status = LeaderServiceImpl::Create(
         leader_service, absl::GetFlag(FLAGS_leader_config_path));
     if (!status.ok()) {
       LOG(ERROR) << status.error_code() << ": " << status.error_message();

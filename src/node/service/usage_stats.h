@@ -4,8 +4,6 @@
 #include <cstdint>
 #include <string>
 
-namespace node {
-
 struct UsageStats {
   static UsageStats Collect();
   std::string DebugString() const;
@@ -14,7 +12,5 @@ struct UsageStats {
   uint64_t active;
   uint64_t total;
 };
-
-} // namespace node
 
 #endif

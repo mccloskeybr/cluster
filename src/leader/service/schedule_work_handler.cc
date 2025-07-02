@@ -8,8 +8,6 @@
 #include "absl/log/log.h"
 #include "src/leader/leader_service.grpc.pb.h"
 
-namespace leader {
-
 grpc::Status LeaderServiceImpl::ScheduleJob(
     grpc::ServerContext* context,
     const leader::ScheduleJobRequest* request,
@@ -43,7 +41,7 @@ grpc::Status LeaderServiceImpl::ScheduleJob(
   for (size_t i = 0; i < nodes_.size(); i++) {
     node::GetUsageReportRequest get_usage_request;
     node::GetUsageReportResponse get_usage_response;
-    grpc::Status status = nodes_[i].GetUsageReport(get_usage_request, get_usage_response);
+    grpc::Status status = nodes_[i].client.GetUsageReport(get_usage_request, get_usage_response);
     if (!status.ok()) { continue; }
     if (get_usage_response.cpu_usage() < min_cpu_usage) {
       min_cpu_usage = get_usage_response.cpu_usage();
@@ -55,8 +53,9 @@ grpc::Status LeaderServiceImpl::ScheduleJob(
         grpc::StatusCode::UNAVAILABLE,
         "Unable to find an available node.");
   }
-
-  LOG(INFO) << "Chose idx: " << min_cpu_idx << " with CPU usage: " << min_cpu_usage;
+  const Node& node = nodes_[min_cpu_idx];
+  LOG(INFO) << "Chose node: " << node.ip_addr << ":" << node.port
+    << " with CPU usage: " << min_cpu_usage;
 
   // NOTE: submit scheduling request.
   node::DoWorkRequest do_work_request;
@@ -64,10 +63,8 @@ grpc::Status LeaderServiceImpl::ScheduleJob(
   *do_work_request.mutable_args() = request->args();
   do_work_request.set_executable(exec_raw);
   node::DoWorkResponse do_work_response;
-  grpc::Status status = nodes_[min_cpu_idx].DoWork(do_work_request, do_work_response);
+  grpc::Status status = node.client.DoWork(do_work_request, do_work_response);
   if (!status.ok()) { return status; }
-
+  job_registrar_.RegisterJob(request->job_name(), node.ip_addr, node.port);
   return grpc::Status::OK;
 }
-
-} // namespace node

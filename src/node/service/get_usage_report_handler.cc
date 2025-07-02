@@ -2,15 +2,13 @@
 
 #include <chrono>
 #include <cstdio>
-#include <grpcpp/grpcpp.h>
 #include <thread>
+#include <grpcpp/grpcpp.h>
 
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "src/node/node_service.grpc.pb.h"
 #include "src/node/service/usage_stats.h"
-
-namespace node {
 
 grpc::Status NodeServiceImpl::GetUsageReport(
     grpc::ServerContext* context,
@@ -31,6 +29,3 @@ grpc::Status NodeServiceImpl::GetUsageReport(
 
   return grpc::Status::OK;
 }
-
-
-} // namespace node

@@ -12,7 +12,6 @@
 #include "absl/strings/str_cat.h"
 #include "src/node/node_service.grpc.pb.h"
 
-namespace node {
 namespace {
 
 void TryRemoveFile(absl::string_view file_path) {
@@ -75,5 +74,3 @@ grpc::Status NodeServiceImpl::DoWork(
 
   return grpc::Status::OK;
 }
-
-} // namespace node

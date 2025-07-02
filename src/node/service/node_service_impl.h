@@ -8,8 +8,7 @@
 #include "src/node/node_service.grpc.pb.h"
 #include "src/node/service/usage_stats.h"
 
-namespace node {
-
+// TODO: on start, clear work directory. or automatically execute jobs in work directory.
 class NodeServiceImpl final : public node::NodeService::Service {
   grpc::Status GetUsageReport(
       grpc::ServerContext* context,
@@ -20,8 +19,11 @@ class NodeServiceImpl final : public node::NodeService::Service {
       grpc::ServerContext* context,
       const node::DoWorkRequest* request,
       node::DoWorkResponse* response) override;
-};
 
-} // namespace node
+  grpc::Status PollJobs(
+      grpc::ServerContext* context,
+      const node::PollJobsRequest* request,
+      node::PollJobsResponse* response) override;
+};
 
 #endif

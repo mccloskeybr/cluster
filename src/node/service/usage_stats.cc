@@ -8,8 +8,6 @@
 
 #include "absl/strings/str_cat.h"
 
-namespace node {
-
 UsageStats UsageStats::Collect() {
     std::string cpu_label;
     uint64_t user, nice, system, idle, iowait;
@@ -35,5 +33,3 @@ std::string UsageStats::DebugString() const {
       ", active: ", active,
       ", total: ", total, " }");
 }
-
-} // namespace node

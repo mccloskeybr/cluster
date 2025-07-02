@@ -2,11 +2,10 @@ syntax = "proto3";
 
 package leader;
 
-message NodeAddress {
-  string ip_address = 1;
-  string port = 2;
-}
-
 message Config {
+  message NodeAddress {
+    string ip_address = 1;
+    string port = 2;
+  }
   repeated NodeAddress nodes = 1;
 }

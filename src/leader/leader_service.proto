@@ -2,12 +2,25 @@ syntax = "proto3";
 
 package leader;
 
+message ResolveNameRequest {
+  string name = 1;
+}
+
+message ResolveNameResponse {
+  string ip_addr = 1;
+  string port = 2;
+}
+
 message ScheduleJobRequest {
   string job_name = 1;
-  string args = 3;
+  string args = 2;
+  string port = 3;
 }
+
 message ScheduleJobResponse {}
 
 service LeaderService {
+  rpc ResolveName(ResolveNameRequest) returns (ResolveNameResponse) {}
+
   rpc ScheduleJob(ScheduleJobRequest) returns (ScheduleJobResponse) {}
 }
