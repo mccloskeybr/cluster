@@ -3,11 +3,13 @@
 
 #include <cstdint>
 #include <string>
+#include <utility>
 #include <grpcpp/grpcpp.h>
 
 #include "src/node/client/node_service_client.h"
 #include "src/node/node_service.grpc.pb.h"
 #include "src/node/service/util/job_registrar.h"
+#include "src/node/service/util/node_registrar.h"
 
 struct Node {
   std::string ip_addr;
@@ -16,43 +18,38 @@ struct Node {
 };
 
 // TODO: on start, clear work directory. or automatically execute jobs in work directory.
-class NodeServiceImpl final : public node::NodeService::Service {
+class NodeServiceImpl final : public proto::NodeService::Service {
  public:
-  NodeServiceImpl(std::vector<Node> nodes)
-      : nodes_(std::move(nodes)), job_registrar_() {}
+  NodeServiceImpl(const proto::NodeConfig& config)
+      : node_registrar_(config), job_registrar_() {}
   ~NodeServiceImpl() = default;
 
-  static grpc::Status Create(
+  static grpc::Status CreateFromConfig(
       std::unique_ptr<NodeServiceImpl>& node_service,
       std::string config_file_path);
 
  private:
-  grpc::Status ResolveName(
-      grpc::ServerContext* context,
-      const node::ResolveNameRequest* request,
-      node::ResolveNameResponse* response) override;
-
   grpc::Status ScheduleJob(
       grpc::ServerContext* context,
-      const node::ScheduleJobRequest* request,
-      node::ScheduleJobResponse* response) override;
+      const proto::ScheduleJobRequest* request,
+      proto::ScheduleJobResponse* response) override;
 
   grpc::Status PollJobs(
       grpc::ServerContext* context,
-      const node::PollJobsRequest* request,
-      node::PollJobsResponse* response) override;
+      const proto::PollJobsRequest* request,
+      proto::PollJobsResponse* response) override;
 
-  grpc::Status GetUsageReport(
+  grpc::Status GetResourceReport(
       grpc::ServerContext* context,
-      const node::GetUsageReportRequest* request,
-      node::GetUsageReportResponse* response) override;
+      const proto::GetResourceReportRequest* request,
+      proto::GetResourceReportResponse* response) override;
 
   grpc::Status DoWork(
       grpc::ServerContext* context,
-      const node::DoWorkRequest* request,
-      node::DoWorkResponse* response) override;
+      const proto::DoWorkRequest* request,
+      proto::DoWorkResponse* response) override;
 
-  const std::vector<Node> nodes_;
+  NodeRegistrar node_registrar_;
   JobRegistrar job_registrar_;
 };
 

@@ -23,8 +23,8 @@ std::vector<std::string> GetAllFilenamesInDirectory(absl::string_view dir_path) 
 
 grpc::Status NodeServiceImpl::PollJobs(
     grpc::ServerContext* context,
-    const node::PollJobsRequest* request,
-    node::PollJobsResponse* response) {
+    const proto::PollJobsRequest* request,
+    proto::PollJobsResponse* response) {
   const static std::string kWorkDir = absl::StrCat(std::getenv("HOME"), "/work/");
   std::vector<std::string> filenames = GetAllFilenamesInDirectory(kWorkDir);
   response->mutable_jobs()->Add(filenames.begin(), filenames.end());

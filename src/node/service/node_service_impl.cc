@@ -13,11 +13,12 @@
 #include "src/node/client/node_service_client.h"
 #include "src/node/config.pb.h"
 #include "src/node/service/util/job_registrar.h"
+#include "src/node/service/util/node_registrar.h"
 
-grpc::Status NodeServiceImpl::Create(
+grpc::Status NodeServiceImpl::CreateFromConfig(
     std::unique_ptr<NodeServiceImpl>& node_service,
     std::string config_file_path) {
-  node::NodeConfig config;
+  proto::NodeConfig config;
   {
     std::ifstream config_file(config_file_path, std::ios::binary);
     if (!config_file.is_open()) {
@@ -29,21 +30,6 @@ grpc::Status NodeServiceImpl::Create(
     google::protobuf::TextFormat::Parse(&input_stream, &config);
   }
 
-  std::vector<Node> nodes;
-  nodes.reserve(config.nodes().size());
-  for (const node::NodeConfig::NodeAddress& node_address : config.nodes()) {
-    LOG(INFO) << "Registering node: "
-      << node_address.ip_address() << ":" << node_address.port();
-    Node node = {
-      .ip_addr = node_address.ip_address(),
-      .port = node_address.port(),
-      .client = NodeServiceClient(grpc::CreateChannel(
-            absl::StrCat(node_address.ip_address(), ":", node_address.port()),
-            grpc::InsecureChannelCredentials())),
-    };
-    nodes.push_back(std::move(node));
-  }
-
-  node_service = std::make_unique<NodeServiceImpl>(std::move(nodes));
+  node_service = std::make_unique<NodeServiceImpl>(config);
   return grpc::Status::OK;
 }

@@ -20,7 +20,7 @@ int main(int argc, char** argv) {
   grpc::ServerBuilder builder;
 
   std::unique_ptr<NodeServiceImpl> node_service = nullptr;
-  grpc::Status status = NodeServiceImpl::Create(
+  grpc::Status status = NodeServiceImpl::CreateFromConfig(
       node_service, absl::GetFlag(FLAGS_config_path));
   if (!status.ok()) {
     LOG(ERROR) << status.error_code() << ": " << status.error_message();

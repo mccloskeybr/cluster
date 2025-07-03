@@ -6,7 +6,7 @@ cc_binary(
   args = [
     "--stderrthreshold=0",
     "--port=6000",
-    "--config_path=/home/mccloskeybr/cluster/node_config.txtpb",
+    "--config_path=/home/mccloskeybr/node_config.txtpb",
   ],
   deps = [
     "//src/node/service:node_service_impl",

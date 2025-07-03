@@ -30,8 +30,7 @@ struct JobMetadata {
 // This class is thread safe.
 class JobRegistrar {
  public:
-  explicit JobRegistrar()
-    : mutex_(), registry_() {}
+  explicit JobRegistrar() : mutex_(), registry_() {}
 
   grpc::Status RegisterJob(absl::string_view name);
 

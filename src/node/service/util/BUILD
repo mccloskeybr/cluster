@@ -16,10 +16,30 @@ cc_library(
 )
 
 cc_library(
-  name = "usage_stats",
-  hdrs = ["usage_stats.h"],
-  srcs = ["usage_stats.cc"],
+  name = "node_registrar",
+  hdrs = ["node_registrar.h"],
+  srcs = ["node_registrar.cc"],
+  linkopts = ["-latomic"],
   deps = [
+    ":network",
+    ":resource_stats",
+    "//src/node:config_cc_proto",
+    "//src/node/client:node_service_client",
+    "//src/node:node_service_cc_grpc",
+    "@abseil-cpp//absl/log:check",
+    "@abseil-cpp//absl/log:log",
+    "@grpc//:grpc++",
+  ],
+)
+
+cc_library(
+  name = "resource_stats",
+  hdrs = ["resource_stats.h"],
+  srcs = ["resource_stats.cc"],
+  deps = [
+    "//src/node:node_service_cc_grpc",
+    "@abseil-cpp//absl/log:check",
+    "@abseil-cpp//absl/log:log",
     "@abseil-cpp//absl/strings:strings",
   ],
 )

@@ -4,7 +4,9 @@
 #include <string>
 #include <grpcpp/grpcpp.h>
 
-// Extracts the peer IP address.
+#include "absl/strings/string_view.h"
+
 std::string GetPeerIpAddr(grpc::ServerContext* context);
+bool IsSelfIpAddr(absl::string_view ip_addr);
 
 #endif

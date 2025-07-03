@@ -30,8 +30,8 @@ void ExecuteJob(JobRegistrar* job_registrar, std::string job_name) {
 
 grpc::Status NodeServiceImpl::DoWork(
     grpc::ServerContext* context,
-    const node::DoWorkRequest* request,
-    node::DoWorkResponse* response) {
+    const proto::DoWorkRequest* request,
+    proto::DoWorkResponse* response) {
   LOG(INFO) << "Attempting to schedule: " << request->job_name() << " for execution.";
   if (request->job_name().empty()) {
     return grpc::Status(

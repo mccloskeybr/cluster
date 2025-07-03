@@ -1,11 +1,17 @@
 syntax = "proto3";
 
-package node;
+package proto;
 
-message GetUsageReportRequest {}
+message GetResourceReportRequest {}
 
-message GetUsageReportResponse {
-  float cpu_usage = 1;
+message ResourceStats {
+  float idle_cpu_seconds = 1;
+  float active_cpu_seconds = 2;
+  float total_cpu_seconds = 3;
+}
+message GetResourceReportResponse {
+  ResourceStats local_stats = 1;
+  ResourceStats aggregate_stats = 2;
 }
 
 message PollJobsRequest {}
@@ -31,14 +37,12 @@ message ScheduleJobRequest {
   string job_name = 1;
   string port = 2;
   string args = 3;
+  float min_cpu = 4;
 }
 
 message ScheduleJobResponse {}
 
 service NodeService {
-  // TODO: Make this more abstract, just a "query information about this container" fn.
-  rpc ResolveName(ResolveNameRequest) returns (ResolveNameResponse) {}
-
   // NOTE: Schedules work on this node or any connecting node.
   rpc ScheduleJob(ScheduleJobRequest) returns (ScheduleJobResponse) {}
 
@@ -46,7 +50,7 @@ service NodeService {
   rpc PollJobs(PollJobsRequest) returns (PollJobsResponse) {}
 
   // NOTE: Retrieves usage statistics on this node over a fixed time interval.
-  rpc GetUsageReport(GetUsageReportRequest) returns (GetUsageReportResponse) {}
+  rpc GetResourceReport(GetResourceReportRequest) returns (GetResourceReportResponse) {}
 
   // NOTE: Schedule work to be done on this node.
   rpc DoWork(DoWorkRequest) returns (DoWorkResponse) {}

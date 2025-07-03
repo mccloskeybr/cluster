@@ -9,22 +9,26 @@
 class NodeServiceClient {
  public:
   explicit NodeServiceClient(std::shared_ptr<grpc::Channel> channel)
-    : stub_(node::NodeService::NewStub(channel)) {}
+    : stub_(proto::NodeService::NewStub(channel)) {}
 
-  grpc::Status GetUsageReport(
-      const node::GetUsageReportRequest& request,
-      node::GetUsageReportResponse& response) const;
+  grpc::Status ScheduleJob(
+      const proto::ScheduleJobRequest& request,
+      proto::ScheduleJobResponse& response) const;
+
+  grpc::Status GetResourceReport(
+      const proto::GetResourceReportRequest& request,
+      proto::GetResourceReportResponse& response) const;
 
   grpc::Status DoWork(
-      const node::DoWorkRequest& request,
-      node::DoWorkResponse& response) const;
+      const proto::DoWorkRequest& request,
+      proto::DoWorkResponse& response) const;
 
   grpc::Status PollJobs(
-      const node::PollJobsRequest & request,
-      node::PollJobsResponse& response) const;
+      const proto::PollJobsRequest& request,
+      proto::PollJobsResponse& response) const;
 
  private:
-  std::unique_ptr<node::NodeService::Stub> stub_;
+  std::unique_ptr<proto::NodeService::Stub> stub_;
 };
 
 #endif
