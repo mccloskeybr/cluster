@@ -40,7 +40,9 @@ message ScheduleJobRequest {
   float min_cpu = 4;
 }
 
-message ScheduleJobResponse {}
+message ScheduleJobResponse {
+  string ip_addr = 1;
+}
 
 service NodeService {
   // NOTE: Schedules work on this node or any connecting node.

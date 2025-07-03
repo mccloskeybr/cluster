@@ -66,8 +66,8 @@ void PollNodeStatus(NodeRegistrar* registrar) {
         node.local_stats = ResourceStats::FromProto(std::get<1>(report).local_stats());
         node.aggregate_stats = ResourceStats::FromProto(std::get<1>(report).aggregate_stats());
 
-        aggregate_stats = aggregate_stats + node.local_stats;
-        if (!node.is_self) { aggregate_stats = aggregate_stats + node.aggregate_stats; }
+        if (node.is_self) { aggregate_stats = aggregate_stats + node.local_stats; }
+        else { aggregate_stats = aggregate_stats + node.aggregate_stats; }
 
         LOG(INFO) << "Node health report: " << node.ip_addr << ":" << node.port << " - "
           << NodeStateToString(node.state) << ", stats: " << node.local_stats.DebugString();

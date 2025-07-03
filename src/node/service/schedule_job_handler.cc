@@ -56,6 +56,7 @@ grpc::Status NodeServiceImpl::ScheduleJob(
     LOG(INFO) << "Not enough space for " << request->min_cpu()
       << " among local nodes, attempting to forward...";
     for (size_t i = 0; i < nodes.size(); i++) {
+      if (nodes[i].is_self) { continue; }
       if (nodes[i].state != NodeState::HEALTHY) { continue; }
       if (nodes[i].aggregate_stats.idle < request->min_cpu()) { continue; }
       if (nodes[i].aggregate_stats.idle > max_idle) {
@@ -83,5 +84,9 @@ grpc::Status NodeServiceImpl::ScheduleJob(
   *do_work_request.mutable_args() = request->args();
   *do_work_request.mutable_executable() = exec_raw;
   proto::DoWorkResponse do_work_response;
-  return node->client->DoWork(do_work_request, do_work_response);
+  grpc::Status status = node->client->DoWork(do_work_request, do_work_response);
+  if (!status.ok()) { return status; }
+
+  *response->mutable_ip_addr() = node->ip_addr;
+  return grpc::Status::OK;
 }
