@@ -8,7 +8,7 @@
 #include "absl/log/log.h"
 #include "absl/strings/str_cat.h"
 #include "src/node/node_service.grpc.pb.h"
-#include "src/node/service/usage_stats.h"
+#include "src/node/service/util/usage_stats.h"
 
 grpc::Status NodeServiceImpl::GetUsageReport(
     grpc::ServerContext* context,

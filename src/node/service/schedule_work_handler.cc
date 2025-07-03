@@ -1,4 +1,4 @@
-#include "src/leader/service/leader_service_impl.h"
+#include "src/node/service/node_service_impl.h"
 
 #include <fstream>
 #include <iostream>
@@ -6,12 +6,12 @@
 #include <grpcpp/grpcpp.h>
 
 #include "absl/log/log.h"
-#include "src/leader/leader_service.grpc.pb.h"
+#include "src/node/node_service.grpc.pb.h"
 
-grpc::Status LeaderServiceImpl::ScheduleJob(
+grpc::Status NodeServiceImpl::ScheduleJob(
     grpc::ServerContext* context,
-    const leader::ScheduleJobRequest* request,
-    leader::ScheduleJobResponse* response) {
+    const node::ScheduleJobRequest* request,
+    node::ScheduleJobResponse* response) {
   // NOTE: find and read executable.
   const static std::string kExecDir = absl::StrCat(std::getenv("HOME"), "/binaries/");
   const std::string exec_file = absl::StrCat(kExecDir, request->job_name());
@@ -58,13 +58,14 @@ grpc::Status LeaderServiceImpl::ScheduleJob(
     << " with CPU usage: " << min_cpu_usage;
 
   // NOTE: submit scheduling request.
+  // TODO: retry failed requests by trying the next node. sort nodes by cpu usage.
   node::DoWorkRequest do_work_request;
   *do_work_request.mutable_job_name() = request->job_name();
+  *do_work_request.mutable_port() = request->port();
   *do_work_request.mutable_args() = request->args();
   do_work_request.set_executable(exec_raw);
   node::DoWorkResponse do_work_response;
   grpc::Status status = node.client.DoWork(do_work_request, do_work_response);
   if (!status.ok()) { return status; }
-  job_registrar_.RegisterJob(request->job_name(), node.ip_addr, node.port);
   return grpc::Status::OK;
 }

@@ -16,18 +16,37 @@ message PollJobsResponse {
 
 message DoWorkRequest {
   string job_name = 1;
-  string args = 2;
-  bytes executable = 3;
+  string port = 2;
+  string args = 3;
+  bytes executable = 4;
 }
 
 message DoWorkResponse {}
 
-service NodeService {
-  // NOTE: Retrieves usage statistics for this node over a fixed time interval.
-  rpc GetUsageReport(GetUsageReportRequest) returns (GetUsageReportResponse) {}
+message ResolveNameRequest {}
 
-  // NOTE: Retrieves currently running jobs.
+message ResolveNameResponse {}
+
+message ScheduleJobRequest {
+  string job_name = 1;
+  string port = 2;
+  string args = 3;
+}
+
+message ScheduleJobResponse {}
+
+service NodeService {
+  // TODO: Make this more abstract, just a "query information about this container" fn.
+  rpc ResolveName(ResolveNameRequest) returns (ResolveNameResponse) {}
+
+  // NOTE: Schedules work on this node or any connecting node.
+  rpc ScheduleJob(ScheduleJobRequest) returns (ScheduleJobResponse) {}
+
+  // NOTE: Retrieves currently running jobs on this node.
   rpc PollJobs(PollJobsRequest) returns (PollJobsResponse) {}
+
+  // NOTE: Retrieves usage statistics on this node over a fixed time interval.
+  rpc GetUsageReport(GetUsageReportRequest) returns (GetUsageReportResponse) {}
 
   // NOTE: Schedule work to be done on this node.
   rpc DoWork(DoWorkRequest) returns (DoWorkResponse) {}

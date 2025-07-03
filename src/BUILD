@@ -6,10 +6,9 @@ cc_binary(
   args = [
     "--stderrthreshold=0",
     "--port=6000",
-    "--leader_config_path=/home/mccloskeybr/cluster/leader_config.txtpb",
+    "--config_path=/home/mccloskeybr/cluster/node_config.txtpb",
   ],
   deps = [
-    "//src/leader/service:leader_service_impl",
     "//src/node/service:node_service_impl",
     "@abseil-cpp//absl/flags:flag",
     "@abseil-cpp//absl/flags:parse",

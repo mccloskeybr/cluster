@@ -11,14 +11,19 @@
 #include "absl/strings/string_view.h"
 #include "absl/strings/str_cat.h"
 #include "src/node/node_service.grpc.pb.h"
+#include "src/node/service/util/network.h"
 
 namespace {
 
-void TryRemoveFile(absl::string_view file_path) {
-  std::error_code error;
-  if (!std::filesystem::remove(file_path, error)) {
-    LOG(ERROR) << "Error removing file: " << file_path << ": " << error.message();
-  }
+void ExecuteJob(JobRegistrar* job_registrar, std::string job_name) {
+  const JobMetadata job = job_registrar->GetJob(job_name);
+  const std::string exec_call = absl::StrCat(job.path, " ", job.args);
+  LOG(INFO) << "Executing job: " << job_name << ": " << exec_call;
+  job_registrar->UpdateJobState(job.name, JobState::IN_PROGRESS);
+  const int32_t status = std::system(exec_call.c_str());
+  LOG(INFO) << "Job: " << job_name << " completed with status: " << status;
+  job_registrar->UpdateJobState(
+      job.name, status == 0 ? JobState::COMPLETE_SUCCESS : JobState::COMPLETE_ERROR);
 }
 
 } // namespace
@@ -27,50 +32,52 @@ grpc::Status NodeServiceImpl::DoWork(
     grpc::ServerContext* context,
     const node::DoWorkRequest* request,
     node::DoWorkResponse* response) {
-  LOG(INFO) << "Received request to execute: " << request->job_name();
+  LOG(INFO) << "Attempting to schedule: " << request->job_name() << " for execution.";
   if (request->job_name().empty()) {
-    return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT, "job_name cannot be empty.");
+    return grpc::Status(
+        grpc::StatusCode::INVALID_ARGUMENT,
+        "job_name cannot be empty.");
   }
+
+  // NOTE: successful registry is a blessing to clobber any existing files.
+  // We assume that if there are any jobs using that binary registration fails.
+  const grpc::Status status = job_registrar_.RegisterJob(request->job_name());
+  if (!status.ok()) { return status; }
 
   const static std::string kWorkDir = absl::StrCat(std::getenv("HOME"), "/work/");
   std::filesystem::create_directory(kWorkDir);
-
   const std::string exec_file = absl::StrCat(kWorkDir, request->job_name());
-  if (std::filesystem::exists(exec_file)) {
-    return grpc::Status(grpc::StatusCode::INVALID_ARGUMENT,
-        absl::StrCat("Job with name: ", request->job_name(), " is already scheduled."));
-  }
-
   {
     std::ofstream file(exec_file, std::ios::binary);
     if (!file.is_open()) {
-      return grpc::Status(grpc::StatusCode::INTERNAL,
-          absl::StrCat("Unable to executable: ", exec_file));
+      job_registrar_.UpdateJobState(request->job_name(), JobState::COMPLETE_ERROR);
+      return grpc::Status(
+          grpc::StatusCode::INTERNAL,
+          absl::StrCat("Unable to open executable: ", exec_file));
     }
     file << request->executable();
     if (file.fail()) {
-      return grpc::Status(grpc::StatusCode::INTERNAL,
-          absl::StrCat("Unable to executable: ", exec_file));
+      job_registrar_.UpdateJobState(request->job_name(), JobState::COMPLETE_ERROR);
+      return grpc::Status(
+          grpc::StatusCode::INTERNAL,
+          absl::StrCat("Unable to write executable: ", exec_file));
     }
   }
-
   std::error_code error;
   std::filesystem::permissions(
-      exec_file, std::filesystem::perms::owner_exec, std::filesystem::perm_options::add,
-      error);
+      exec_file, std::filesystem::perms::owner_exec,
+      std::filesystem::perm_options::add, error);
   if (error) {
-    LOG(ERROR) << "Error updating permissions on file: " << exec_file
-      << ": " << error.message();
-    TryRemoveFile(exec_file); }
+    job_registrar_.UpdateJobState(request->job_name(), JobState::COMPLETE_ERROR);
+    return grpc::Status(
+        grpc::StatusCode::INTERNAL,
+        absl::StrCat("Unable to update permissions: ", exec_file));
+  }
 
-  LOG(INFO) << "Scheduling: " << request->job_name() << " for execution.";
-  std::thread async_work_thread(
-      [](std::string exec_file, std::string args) {
-        LOG(INFO) << "Executing: " << exec_file;
-        std::system(absl::StrCat(exec_file, " ", args).c_str());
-        TryRemoveFile(exec_file);
-      }, exec_file, request->args());
-  async_work_thread.detach();
+  // TODO: likely want to keep track of thread to support cancellation.
+  job_registrar_.FinalizeJob(request->job_name(), request->port(), request->args(), exec_file);
+  std::thread work_thread(ExecuteJob, &job_registrar_, request->job_name());
+  work_thread.detach();
 
   return grpc::Status::OK;
 }

@@ -20,3 +20,14 @@ cc_grpc_library(
   grpc_only = True,
   deps = [":node_service_cc_proto"],
 )
+
+proto_library(
+  name = "config_proto",
+  srcs = ["config.proto"],
+  deps = [],
+)
+
+cc_proto_library(
+  name = "config_cc_proto",
+  deps = [":config_proto"],
+)
