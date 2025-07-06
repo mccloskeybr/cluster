@@ -42,7 +42,6 @@ grpc::Status NodeServiceImpl::DoWork(
   // NOTE: successful registry is a blessing to clobber any existing files.
   // We assume that if there are any jobs using that binary registration fails.
   const grpc::Status status = job_registrar_.RegisterJob(request->job_name());
-  if (!status.ok()) { return status; }
 
   const static std::string kWorkDir = absl::StrCat(std::getenv("HOME"), "/work/");
   std::filesystem::create_directory(kWorkDir);
